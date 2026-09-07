@@ -8,7 +8,8 @@ A lightweight tool for capturing thoughts to a Notion database. Access your entr
 - **Search** entries by keyword
 - **Read** recent entries from the terminal
 - **Todos** — tag entries with `#todo` to track them as tasks with drag-and-drop reordering
-- **Web dashboard** — single-page UI with Notes and Todos widgets side by side
+- **Pomodoro timer** — built-in timer widget with 10/15/20/30-minute presets; focus on any todo to associate it with the timer
+- **Web dashboard** — single-page UI with Notes, Pomodoro, and Todos widgets
 - **Raycast integration** for GUI capture via hotkey
 
 ## Setup
