@@ -1,24 +1,48 @@
 """FastAPI backend for the Notion Quick Capture web dashboard."""
 
+from __future__ import annotations
+
+import hmac
 import json
+import os
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.requests import Request
 
 import notion_client as nc
+
+API_SECRET = os.environ.get("API_SECRET")
+
+CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
+    if o.strip()
+]
 
 app = FastAPI(title="Notion Quick Capture")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def verify_api_key(request: Request):
+    if API_SECRET is None:
+        return
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = auth[len("Bearer "):]
+    if not hmac.compare_digest(token, API_SECRET):
+        raise HTTPException(status_code=401, detail="Invalid bearer token")
 
 TODO_ORDER_FILE = Path(__file__).resolve().parent.parent / "data" / "todo_order.json"
 
@@ -38,17 +62,17 @@ def _save_todo_order(order: List[str]):
 
 
 @app.get("/api/notes")
-def list_notes(start_cursor: Optional[str] = None, page_size: int = 20):
+def list_notes(start_cursor: Optional[str] = None, page_size: int = 20, _auth=Depends(verify_api_key)):
     return nc.list_notes(start_cursor=start_cursor, page_size=page_size)
 
 
 @app.get("/api/notes/search")
-def search_notes(q: str):
+def search_notes(q: str, _auth=Depends(verify_api_key)):
     return {"results": nc.search_notes(q)}
 
 
 @app.get("/api/notes/{note_id}")
-def get_note(note_id: str):
+def get_note(note_id: str, _auth=Depends(verify_api_key)):
     try:
         return nc.get_page(note_id)
     except Exception as e:
@@ -62,7 +86,7 @@ class CreateNoteBody(BaseModel):
 
 
 @app.post("/api/notes", status_code=201)
-def create_note(payload: CreateNoteBody):
+def create_note(payload: CreateNoteBody, _auth=Depends(verify_api_key)):
     return nc.create_page(payload.title, tags=payload.tags, body=payload.body)
 
 
@@ -74,7 +98,7 @@ class UpdateNoteBody(BaseModel):
 
 
 @app.patch("/api/notes/{note_id}")
-def update_note(note_id: str, payload: UpdateNoteBody):
+def update_note(note_id: str, payload: UpdateNoteBody, _auth=Depends(verify_api_key)):
     properties: dict = {}
     if payload.title is not None:
         properties["Name"] = {"title": [{"text": {"content": payload.title}}]}
@@ -90,7 +114,7 @@ def update_note(note_id: str, payload: UpdateNoteBody):
 
 
 @app.delete("/api/notes/{note_id}")
-def delete_note(note_id: str):
+def delete_note(note_id: str, _auth=Depends(verify_api_key)):
     return nc.archive_page(note_id)
 
 
@@ -100,7 +124,7 @@ class PublishPageBody(BaseModel):
 
 
 @app.post("/api/notes/{note_id}/publish", status_code=201)
-def publish_page(note_id: str, payload: PublishPageBody):
+def publish_page(note_id: str, payload: PublishPageBody, _auth=Depends(verify_api_key)):
     blocks = nc.parse_content_to_blocks(payload.content)
     if not blocks:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
@@ -111,7 +135,7 @@ def publish_page(note_id: str, payload: PublishPageBody):
 
 
 @app.get("/api/pages")
-def list_pages():
+def list_pages(_auth=Depends(verify_api_key)):
     return {"results": nc.list_child_pages()}
 
 
@@ -119,7 +143,7 @@ def list_pages():
 
 
 @app.get("/api/todos")
-def list_todos():
+def list_todos(_auth=Depends(verify_api_key)):
     todos = nc.list_todos()
     order = _load_todo_order()
     order_map = {pid: i for i, pid in enumerate(order)}
@@ -132,7 +156,7 @@ class TodoOrderBody(BaseModel):
 
 
 @app.patch("/api/todos/order")
-def update_todo_order(payload: TodoOrderBody):
+def update_todo_order(payload: TodoOrderBody, _auth=Depends(verify_api_key)):
     _save_todo_order(payload.order)
     return {"ok": True}
 

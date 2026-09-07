@@ -51,6 +51,16 @@ cp .env.example .env
 # Edit .env with your Notion API key and database ID
 ```
 
+### 4. API authentication (optional)
+
+Set `API_SECRET` in `.env` to enable bearer token auth on all `/api/*` routes. Leave it unset for local development (auth is disabled by default).
+
+```bash
+API_SECRET=some-random-secret
+```
+
+When enabled, all requests must include an `Authorization: Bearer <secret>` header.
+
 ## Usage
 
 ### CLI
@@ -99,6 +109,12 @@ Open http://localhost:5173 to view the dashboard. Notes, Pomodoro, Todos, and Pa
 
 See [docs/raycast-usage.md](docs/raycast-usage.md) for details.
 
+### iOS Shortcut
+
+Capture thoughts from your phone with a single tap. Requires a publicly hosted server with `API_SECRET` set.
+
+See [docs/ios-shortcut.md](docs/ios-shortcut.md) for setup instructions.
+
 ## Project Structure
 
 ```
@@ -107,7 +123,7 @@ src/notion_client.py   # Notion API client
 src/server.py          # FastAPI backend (/api endpoints)
 web/                   # Vite + React + TypeScript frontend
 raycast/nn.sh          # Raycast script command
-docs/                  # Setup guides, usage docs, roadmap
+docs/                  # Setup guides, usage docs, iOS shortcut guide, roadmap
 .env.example           # Template for environment variables
 ```
 
