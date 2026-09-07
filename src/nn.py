@@ -5,25 +5,15 @@ Usage: see docs/cli-usage.md
 """
 
 import argparse
-import os
+import subprocess
+import sys
 from datetime import datetime, timezone
-from pathlib import Path
 
-import httpx
-from dotenv import load_dotenv
-
-# Load .env from project root
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
-API_KEY = os.environ["NOTION_API_KEY"]
-DATABASE_ID = os.environ["NOTION_DB_ID"]
-BASE_URL = "https://api.notion.com/v1"
-HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Notion-Version": "2022-06-28",
-    "Content-Type": "application/json",
-}
-
+from notion_client import (
+    create_page,
+    list_notes,
+    search_notes,
+)
 
 DIM = "\033[2m"
 RESET = "\033[0m"
@@ -51,73 +41,50 @@ def friendly_date(iso_str):
     return local_dt.strftime("%b %-d, %Y")
 
 
-def format_entry(page):
-    """Format a single database entry for terminal display."""
-    title = page["properties"]["Name"]["title"]
-    text = title[0]["plain_text"] if title else "(empty)"
-    date = friendly_date(page["created_time"])
-
-    tags_prop = page["properties"].get("Tags", {}).get("multi_select", [])
-    tag_str = "  " + " ".join(f"{CYAN}#{t['name']}{RESET}" for t in tags_prop) if tags_prop else ""
-
+def format_entry(entry):
+    """Format a serialized entry dict for terminal display."""
+    text = entry["title"] or "(empty)"
+    date = friendly_date(entry["created_time"])
+    tags = entry.get("tags", [])
+    tag_str = "  " + " ".join(f"{CYAN}#{t}{RESET}" for t in tags) if tags else ""
     return f"  {DIM}{MUTED_PURPLE}[{date}]{RESET}  {BOLD}{text}{RESET}{tag_str}"
 
 
 def capture(text, tags=None, body=None):
     """Add a new entry to the Quick Capture database."""
-    properties = {"Name": {"title": [{"text": {"content": text}}]}}
-    if tags:
-        properties["Tags"] = {"multi_select": [{"name": t} for t in tags]}
-    if body:
-        properties["Notes"] = {"rich_text": [{"text": {"content": body}}]}
-
-    payload = {"parent": {"database_id": DATABASE_ID}, "properties": properties}
-
-    resp = httpx.post(f"{BASE_URL}/pages", headers=HEADERS, json=payload)
-    resp.raise_for_status()
+    create_page(text, tags=tags, body=body)
     parts = [f"{GREEN}Captured:{RESET} {BOLD}{text}{RESET}"]
     if tags:
         parts.append("  " + " ".join(f"{CYAN}#{t}{RESET}" for t in tags))
     print("".join(parts))
 
 
-def query_db(**kwargs):
-    """Query the database."""
-    resp = httpx.post(
-        f"{BASE_URL}/databases/{DATABASE_ID}/query",
-        headers=HEADERS,
-        json=kwargs,
-    )
-    resp.raise_for_status()
-    return resp.json()
-
-
 def read_recent(n=5):
     """Show the last N entries."""
-    results = query_db(
-        sorts=[{"timestamp": "created_time", "direction": "descending"}],
-        page_size=n,
-    )
-    if not results["results"]:
+    data = list_notes(page_size=n)
+    if not data["results"]:
         print("No entries yet.")
         return
-
-    for page in results["results"]:
-        print(format_entry(page))
+    for entry in data["results"]:
+        print(format_entry(entry))
 
 
 def search(query):
     """Search entries by keyword."""
-    results = query_db(
-        filter={"property": "Name", "title": {"contains": query}},
-        sorts=[{"timestamp": "created_time", "direction": "descending"}],
-    )
-    if not results["results"]:
+    results = search_notes(query)
+    if not results:
         print(f"No results for '{query}'.")
         return
+    for entry in results:
+        print(format_entry(entry))
 
-    for page in results["results"]:
-        print(format_entry(page))
+
+def start_web():
+    """Launch the web dashboard."""
+    subprocess.run(
+        [sys.executable, "-m", "uvicorn", "server:app", "--reload", "--port", "8000"],
+        cwd=str(__import__("pathlib").Path(__file__).resolve().parent),
+    )
 
 
 def main():
@@ -127,10 +94,13 @@ def main():
     parser.add_argument("-b", "--body", type=str, default=None, help="Extended body text")
     parser.add_argument("--search", type=str, default=None, help="Search entries by keyword")
     parser.add_argument("--last", type=int, default=None, help="Show last N entries")
+    parser.add_argument("--web", action="store_true", help="Launch web dashboard")
 
     args = parser.parse_args()
 
-    if args.search:
+    if args.web:
+        start_web()
+    elif args.search:
         search(args.search)
     elif args.last:
         read_recent(args.last)
