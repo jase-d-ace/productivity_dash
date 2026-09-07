@@ -1,6 +1,6 @@
-# nn — CLI Usage
+# Inkwell — CLI Usage
 
-A terminal command for quick capture to Notion.
+A terminal command for capturing thoughts to Notion.
 
 ## Setup
 

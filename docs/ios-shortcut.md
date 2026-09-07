@@ -1,4 +1,4 @@
-# iOS Shortcut: Quick Capture to Notion
+# iOS Shortcut: Inkwell Quick Capture
 
 Capture thoughts from your iPhone or iPad with a single tap.
 
@@ -31,7 +31,7 @@ Without this, anyone who discovers your server URL could create notes in your No
 
 1. Open the **Shortcuts** app on your iPhone/iPad
 2. Tap **+** in the top-right to create a new shortcut
-3. Tap the name at the top and rename it to **Quick Capture to Notion**
+3. Tap the name at the top and rename it to **Inkwell**
 4. Add the following actions in order:
 
 ### Action 1: Ask for Input

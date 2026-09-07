@@ -1,4 +1,4 @@
-"""FastAPI backend for the Notion Quick Capture web dashboard."""
+"""FastAPI backend for Inkwell."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ CORS_ORIGINS = [
     if o.strip()
 ]
 
-app = FastAPI(title="Notion Quick Capture")
+app = FastAPI(title="Inkwell")
 
 app.add_middleware(
     CORSMiddleware,

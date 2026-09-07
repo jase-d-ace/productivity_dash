@@ -64,7 +64,7 @@ export default function CaptureForm() {
 
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem', padding: '1rem', background: '#f8f5fc', borderRadius: 10, border: '1px solid #e4dff0' }}>
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Quick capture..." style={inputStyle} />
+      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="What's on your mind?" style={inputStyle} />
       <div style={{ display: 'flex', gap: 8 }}>
         <input value={tags} onChange={e => setTags(e.target.value)} placeholder="Tags (comma-separated)" style={{ ...smallInputStyle, flex: 1 }} />
         <input value={body} onChange={e => setBody(e.target.value)} placeholder="Notes (optional)" style={{ ...smallInputStyle, flex: 2 }} />

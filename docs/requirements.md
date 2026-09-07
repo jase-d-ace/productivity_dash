@@ -1,4 +1,4 @@
-# Notion Quick Capture - Requirements & Workflow
+# Inkwell - Requirements & Workflow
 
 ## Vision
 
@@ -10,7 +10,7 @@ A central "brain dump" spot in Notion where random thoughts, ideas, and notes la
 
 - [ ] Create a Notion account (free tier is fine)
 - [ ] Create a workspace
-- [ ] Create a **single database page** (e.g., "Inbox" or "Quick Capture") with basic properties:
+- [ ] Create a **single database page** (e.g., "Inbox" or "Inkwell") with basic properties:
   - **Title** (text) — the thought/note
   - **Created** (date, auto) — when it was captured
   - **Tags** (multi-select, optional) — lightweight categorization
@@ -23,7 +23,7 @@ A central "brain dump" spot in Notion where random thoughts, ideas, and notes la
 
 ## 2. Core Features
 
-### 2a. Write (Quick Capture)
+### 2a. Write (Capture)
 
 Send a thought to Notion with minimal friction. The input is just text — it becomes a new row in the database.
 

@@ -1,10 +1,10 @@
-# Raycast: Quick Capture to Notion
+# Raycast: Inkwell Quick Capture
 
 ## Installation
 
 1. Open Raycast Settings (Cmd+,) > Extensions > Script Commands > Add Script Directory
 2. Select the `raycast/` folder in this project
-3. The "Quick Capture to Notion" command appears immediately
+3. The "Inkwell — Quick Capture" command appears immediately
 
 ## Usage
 
@@ -13,7 +13,7 @@
 Open Raycast and type:
 
 ```
-Quick Capture to Notion
+Inkwell — Quick Capture
 ```
 
 Then type your thought and press Enter.
@@ -21,7 +21,7 @@ Then type your thought and press Enter.
 ### Hotkey
 
 1. Open Raycast Settings > Extensions > Script Commands
-2. Find "Quick Capture to Notion"
+2. Find "Inkwell — Quick Capture"
 3. Click the hotkey field and press your preferred shortcut (e.g. Cmd+Ctrl+N)
 
 Now pressing the hotkey opens the command with the text input ready.

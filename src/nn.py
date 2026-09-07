@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""nn — Quick capture to Notion. Jot a thought, read it back.
+"""Inkwell — Capture a thought, develop it later.
 
 Usage: see docs/cli-usage.md
 """
@@ -51,7 +51,7 @@ def format_entry(entry):
 
 
 def capture(text, tags=None, body=None):
-    """Add a new entry to the Quick Capture database."""
+    """Add a new entry to the Inkwell database."""
     create_page(text, tags=tags, body=body)
     parts = [f"{GREEN}Captured:{RESET} {BOLD}{text}{RESET}"]
     if tags:
@@ -88,7 +88,7 @@ def start_web():
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="nn", description="Quick capture to Notion")
+    parser = argparse.ArgumentParser(prog="nn", description="Inkwell — capture thoughts to Notion")
     parser.add_argument("thought", nargs="*", help="Text to capture")
     parser.add_argument("-t", "--tag", action="append", default=[], help="Tag (repeatable, or comma-separated)")
     parser.add_argument("-b", "--body", type=str, default=None, help="Extended body text")

@@ -1,6 +1,6 @@
 # Notion Setup Guide
 
-Step-by-step instructions to get your Notion instance ready for Quick Capture.
+Step-by-step instructions to get your Notion instance ready for Inkwell.
 
 ---
 
@@ -12,12 +12,12 @@ Step-by-step instructions to get your Notion instance ready for Quick Capture.
 
 ---
 
-## Step 2: Create the Quick Capture Database
+## Step 2: Create the Inkwell Database
 
 1. In your workspace, create a new **full-page database** (not inline)
    - Click "New page" in the sidebar
    - Choose "Table" as the database type
-   - Name it **"Quick Capture"** (or "Inbox", whatever you prefer)
+   - Name it **"Inkwell"** (or "Inbox", whatever you prefer)
 
 2. Set up these properties (columns):
 
@@ -42,7 +42,7 @@ The "Created time" is automatically tracked by Notion on every page, so no need 
 1. Go to https://www.notion.so/my-integrations
 2. Click **"New integration"**
 3. Fill in:
-   - **Name**: `Quick Capture` (or anything you like)
+   - **Name**: `Inkwell` (or anything you like)
    - **Associated workspace**: Select your workspace
    - **Capabilities**: Make sure **Read content**, **Insert content**, and **Update content** are checked
 4. Click **Submit**
@@ -54,10 +54,10 @@ The "Created time" is automatically tracked by Notion on every page, so no need 
 
 This is the step people often miss:
 
-1. Go back to your Quick Capture database page in Notion
+1. Go back to your Inkwell database page in Notion
 2. Click the **"..." menu** (top right)
 3. Go to **"Connections"** (or "Add connections")
-4. Search for your integration name ("Quick Capture")
+4. Search for your integration name ("Inkwell")
 5. Click **Confirm**
 
 Without this step, the API will return 404 errors even with a valid key.
@@ -85,7 +85,7 @@ Once the CLI tool is built, you can verify everything works:
 
 ```bash
 # Add a test entry
-nn "hello from quick capture"
+nn "hello from inkwell"
 
 # Read it back
 nn

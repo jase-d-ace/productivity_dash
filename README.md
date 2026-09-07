@@ -1,6 +1,6 @@
-# nn — Quick Capture to Notion
+# Inkwell
 
-A lightweight tool for capturing thoughts to a Notion database. Access your entries via the terminal CLI, a web dashboard, or a Raycast hotkey.
+A second brain for capturing thoughts and developing them into full ideas. Jot down a thought from the CLI, web dashboard, Raycast, or your phone — then flesh it out with the page editor. Powered by Notion.
 
 ## Features
 
@@ -105,7 +105,7 @@ Open http://localhost:5173 to view the dashboard. Notes, Pomodoro, Todos, and Pa
 
 1. Open Raycast Settings > Extensions > Script Commands > Add Script Directory
 2. Select the `raycast/` folder
-3. Assign a hotkey (e.g. Cmd+Ctrl+N) to "Quick Capture to Notion"
+3. Assign a hotkey (e.g. Cmd+Ctrl+N) to "Inkwell — Quick Capture"
 
 See [docs/raycast-usage.md](docs/raycast-usage.md) for details.
 
