@@ -41,9 +41,9 @@ export default function TodoView() {
     reorderMutation.mutate(reordered.map(t => t.id))
   }
 
-  if (isLoading) return <p style={{ color: '#999' }}>Loading...</p>
+  if (isLoading) return <p style={{ color: '#7a7067' }}>Loading...</p>
 
-  if (todos.length === 0) return <p style={{ color: '#999' }}>No todos yet. Tag a note with #todo to see it here.</p>
+  if (todos.length === 0) return <p style={{ color: '#7a7067' }}>No todos yet. Tag a note with #todo to see it here.</p>
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
