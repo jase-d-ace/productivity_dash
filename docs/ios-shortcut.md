@@ -5,7 +5,27 @@ Capture thoughts from your iPhone or iPad with a single tap.
 ## Prerequisites
 
 - The server must be publicly accessible (e.g. deployed to a VPS, Fly.io, Railway, etc.)
-- `API_SECRET` must be set in your server's environment variables
+- `API_SECRET` must be set in your server's environment variables (see below)
+
+## Setting up API_SECRET
+
+`API_SECRET` is a password you make up yourself. It's a shared secret between your server and your iOS Shortcut so that only you can create notes.
+
+1. Generate a random secret (or just pick a long, hard-to-guess string):
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+2. Add it to your server's `.env` file:
+
+   ```
+   API_SECRET=your-generated-secret-here
+   ```
+
+3. Use that same value in your iOS Shortcut's `Authorization` header as `Bearer your-generated-secret-here`
+
+Without this, anyone who discovers your server URL could create notes in your Notion database.
 
 ## Create the Shortcut
 
