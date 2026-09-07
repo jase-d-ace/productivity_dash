@@ -5,7 +5,12 @@ import { fetchTodos, saveTodoOrder, updateNote } from '../api'
 import type { Note } from '../types'
 import TodoItem from './TodoItem'
 
-export default function TodoView() {
+interface Props {
+  activeTaskId: string | null
+  onSetActive: (id: string | null) => void
+}
+
+export default function TodoView({ activeTaskId, onSetActive }: Props) {
   const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
@@ -66,6 +71,8 @@ export default function TodoView() {
             key={todo.id}
             todo={todo}
             onToggle={(id, done) => toggleMutation.mutate({ id, done })}
+            activeTaskId={activeTaskId}
+            onSetActive={onSetActive}
           />
         ))}
       </SortableContext>

@@ -1,4 +1,9 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchTodos } from '../api'
+import type { Note } from '../types'
 import NoteList from './NoteList'
+import PomodoroTimer from './PomodoroTimer'
 import TodoView from './TodoView'
 
 const widgetStyle: React.CSSProperties = {
@@ -26,6 +31,11 @@ const widgetHeaderStyle: React.CSSProperties = {
 }
 
 export default function Dashboard() {
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const { data } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  const todos: Note[] = data?.results ?? []
+  const activeTodo = todos.find(t => t.id === activeTaskId) ?? null
+
   return (
     <>
       <style>{`
@@ -43,9 +53,15 @@ export default function Dashboard() {
           <div style={widgetHeaderStyle}>Notes</div>
           <NoteList />
         </div>
-        <div style={widgetStyle}>
-          <div style={widgetHeaderStyle}>Todos</div>
-          <TodoView />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+          <div style={widgetStyle}>
+            <div style={widgetHeaderStyle}>Pomodoro</div>
+            <PomodoroTimer activeTodo={activeTodo} onClearActive={() => setActiveTaskId(null)} />
+          </div>
+          <div style={widgetStyle}>
+            <div style={widgetHeaderStyle}>Todos</div>
+            <TodoView activeTaskId={activeTaskId} onSetActive={setActiveTaskId} />
+          </div>
         </div>
       </div>
     </>

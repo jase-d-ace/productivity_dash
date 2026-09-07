@@ -8,10 +8,11 @@ function hashTag(tag: string) {
   return Math.abs(h)
 }
 
-export default function TagBadge({ tag }: { tag: string }) {
+export default function TagBadge({ tag, size }: { tag: string; size?: 'small' }) {
   const bg = PASTEL_COLORS[hashTag(tag.toLowerCase()) % PASTEL_COLORS.length]
+  const isSmall = size === 'small'
   return (
-    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: bg, color: '#4a4462', marginRight: 4 }}>
+    <span style={{ display: 'inline-block', padding: isSmall ? '1px 6px' : '2px 8px', borderRadius: 12, fontSize: isSmall ? 10 : 12, fontWeight: 600, background: bg, color: '#4a4462', marginRight: 4 }}>
       #{tag}
     </span>
   )
