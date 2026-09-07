@@ -117,6 +117,129 @@ def archive_page(page_id: str) -> dict:
     return {"id": page_id, "archived": True}
 
 
+def _parse_inline(text: str) -> list[dict]:
+    """Parse inline markdown into Notion rich_text spans."""
+    import re
+    spans: list[dict] = []
+    # Pattern matches: [text](url), **bold**, *italic*, ~~strike~~, `code`
+    pattern = re.compile(
+        r'\[([^\]]+)\]\(([^)]+)\)'   # link
+        r'|\*\*(.+?)\*\*'            # bold
+        r'|\*(.+?)\*'                # italic
+        r'|~~(.+?)~~'                # strikethrough
+        r'|`(.+?)`'                  # code
+    )
+    last = 0
+    for m in pattern.finditer(text):
+        if m.start() > last:
+            spans.append({"type": "text", "text": {"content": text[last:m.start()]}})
+        if m.group(1) is not None:
+            spans.append({"type": "text", "text": {"content": m.group(1), "link": {"url": m.group(2)}}})
+        elif m.group(3) is not None:
+            spans.append({"type": "text", "text": {"content": m.group(3)}, "annotations": {"bold": True}})
+        elif m.group(4) is not None:
+            spans.append({"type": "text", "text": {"content": m.group(4)}, "annotations": {"italic": True}})
+        elif m.group(5) is not None:
+            spans.append({"type": "text", "text": {"content": m.group(5)}, "annotations": {"strikethrough": True}})
+        elif m.group(6) is not None:
+            spans.append({"type": "text", "text": {"content": m.group(6)}, "annotations": {"code": True}})
+        last = m.end()
+    if last < len(text):
+        spans.append({"type": "text", "text": {"content": text[last:]}})
+    if not spans:
+        spans.append({"type": "text", "text": {"content": text}})
+    return spans
+
+
+def _block(block_type: str, text: str, **extra: object) -> dict:
+    """Build a Notion block dict with inline markdown parsing."""
+    return {"object": "block", "type": block_type, block_type: {"rich_text": _parse_inline(text), **extra}}
+
+
+def parse_content_to_blocks(content: str) -> list[dict]:
+    """Parse markdown content into Notion blocks."""
+    import re
+    blocks: list[dict] = []
+    for line in content.split("\n"):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped == "---" or stripped == "***" or stripped == "___":
+            blocks.append({"object": "block", "type": "divider", "divider": {}})
+        elif stripped.startswith("### "):
+            blocks.append(_block("heading_3", stripped[4:]))
+        elif stripped.startswith("## "):
+            blocks.append(_block("heading_2", stripped[3:]))
+        elif stripped.startswith("# "):
+            blocks.append(_block("heading_1", stripped[2:]))
+        elif stripped.startswith("> "):
+            blocks.append(_block("quote", stripped[2:]))
+        elif stripped.startswith("- [x] ") or stripped.startswith("* [x] "):
+            blocks.append(_block("to_do", stripped[6:], checked=True))
+        elif stripped.startswith("- [ ] ") or stripped.startswith("* [ ] "):
+            blocks.append(_block("to_do", stripped[6:], checked=False))
+        elif stripped.startswith("- ") or stripped.startswith("* "):
+            blocks.append(_block("bulleted_list_item", stripped[2:]))
+        elif re.match(r"^\d+\.\s", stripped):
+            blocks.append(_block("numbered_list_item", re.sub(r"^\d+\.\s", "", stripped)))
+        else:
+            blocks.append(_block("paragraph", stripped))
+    return blocks
+
+
+def create_child_page(parent_page_id: str, title: str, blocks: list[dict]) -> dict:
+    """Create a child page under an existing page."""
+    payload = {
+        "parent": {"page_id": parent_page_id},
+        "properties": {"title": [{"text": {"content": title}}]},
+        "children": blocks,
+    }
+    resp = httpx.post(f"{BASE_URL}/pages", headers=HEADERS, json=payload)
+    resp.raise_for_status()
+    page = resp.json()
+    title_arr = page.get("properties", {}).get("title", {}).get("title", [])
+    return {
+        "id": page["id"],
+        "title": title_arr[0]["plain_text"] if title_arr else title,
+        "url": page.get("url", ""),
+        "created_time": page["created_time"],
+    }
+
+
+def list_child_pages() -> list[dict]:
+    """List all child pages created under database entries."""
+    # Get all DB entries first to know which page IDs are parents
+    db_pages = query_db(page_size=100)
+    parent_ids = {p["id"] for p in db_pages["results"]}
+
+    # Search for all pages, filter to those parented by our DB entries
+    results: list[dict] = []
+    start_cursor = None
+    while True:
+        body: dict = {"filter": {"value": "page", "property": "object"}, "page_size": 100}
+        if start_cursor:
+            body["start_cursor"] = start_cursor
+        resp = httpx.post(f"{BASE_URL}/search", headers=HEADERS, json=body)
+        resp.raise_for_status()
+        data = resp.json()
+        for page in data["results"]:
+            parent = page.get("parent", {})
+            if parent.get("type") == "page_id" and parent.get("page_id") in parent_ids:
+                title_arr = page.get("properties", {}).get("title", {}).get("title", [])
+                results.append({
+                    "id": page["id"],
+                    "title": title_arr[0]["plain_text"] if title_arr else "",
+                    "url": page.get("url", ""),
+                    "created_time": page["created_time"],
+                    "parent_id": parent["page_id"],
+                })
+        if not data.get("has_more"):
+            break
+        start_cursor = data.get("next_cursor")
+    results.sort(key=lambda p: p["created_time"], reverse=True)
+    return results
+
+
 def list_todos() -> list[dict]:
     """List notes tagged with todo/to-do/to do."""
     todo_variants = ["todo", "to-do", "to do"]

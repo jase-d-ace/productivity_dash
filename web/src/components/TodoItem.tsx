@@ -9,9 +9,10 @@ interface Props {
   onToggle: (id: string, done: boolean) => void
   activeTaskId: string | null
   onSetActive: (id: string | null) => void
+  onDelete: (id: string) => void
 }
 
-export default function TodoItem({ todo, onToggle, activeTaskId, onSetActive }: Props) {
+export default function TodoItem({ todo, onToggle, activeTaskId, onSetActive, onDelete }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: todo.id })
 
   const isActive = todo.id === activeTaskId
@@ -63,6 +64,24 @@ export default function TodoItem({ todo, onToggle, activeTaskId, onSetActive }: 
             {isActive ? 'Focusing' : 'Focus'}
           </button>
         )}
+        <button
+          onClick={() => onDelete(todo.id)}
+          title="Delete"
+          style={{
+            background: 'none',
+            border: '1px solid #d4d0de',
+            borderRadius: 6,
+            padding: '3px 7px',
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#c0a0a0',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          &times;
+        </button>
       </div>
       {filteredTags.length > 0 && (
         <div style={{ display: 'flex', gap: 4, marginTop: 4, paddingLeft: 46 }}>

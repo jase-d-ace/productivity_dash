@@ -5,6 +5,7 @@ import type { Note } from '../types'
 import NoteList from './NoteList'
 import PomodoroTimer from './PomodoroTimer'
 import TodoView from './TodoView'
+import PagesWidget from './PagesWidget'
 
 const widgetStyle: React.CSSProperties = {
   background: '#ffffff',
@@ -43,17 +44,18 @@ export default function Dashboard() {
           display: grid;
           grid-template-columns: 3fr 2fr;
           gap: 1.25rem;
+          height: calc(100vh - 6rem);
         }
         @media (max-width: 768px) {
-          .dashboard-grid { grid-template-columns: 1fr; }
+          .dashboard-grid { grid-template-columns: 1fr; height: auto; }
         }
       `}</style>
       <div className="dashboard-grid">
-        <div style={widgetStyle}>
+        <div style={{ ...widgetStyle, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={widgetHeaderStyle}>Notes</div>
           <NoteList />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0, overflow: 'hidden' }}>
           <div style={widgetStyle}>
             <div style={widgetHeaderStyle}>Pomodoro</div>
             <PomodoroTimer activeTodo={activeTodo} onClearActive={() => setActiveTaskId(null)} />
@@ -61,6 +63,10 @@ export default function Dashboard() {
           <div style={widgetStyle}>
             <div style={widgetHeaderStyle}>Todos</div>
             <TodoView activeTaskId={activeTaskId} onSetActive={setActiveTaskId} />
+          </div>
+          <div style={widgetStyle}>
+            <div style={widgetHeaderStyle}>Pages</div>
+            <PagesWidget />
           </div>
         </div>
       </div>

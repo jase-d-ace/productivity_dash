@@ -94,6 +94,27 @@ def delete_note(note_id: str):
     return nc.archive_page(note_id)
 
 
+class PublishPageBody(BaseModel):
+    title: str
+    content: str
+
+
+@app.post("/api/notes/{note_id}/publish", status_code=201)
+def publish_page(note_id: str, payload: PublishPageBody):
+    blocks = nc.parse_content_to_blocks(payload.content)
+    if not blocks:
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
+    return nc.create_child_page(note_id, payload.title, blocks)
+
+
+# --- Pages ---
+
+
+@app.get("/api/pages")
+def list_pages():
+    return {"results": nc.list_child_pages()}
+
+
 # --- Todos ---
 
 

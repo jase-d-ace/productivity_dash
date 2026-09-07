@@ -26,6 +26,26 @@ export const updateNote = (id: string, data: Partial<{ title: string; tags: stri
 export const deleteNote = (id: string) =>
   request<{ id: string }>(`/notes/${id}`, { method: 'DELETE' })
 
+export const fetchNote = (id: string) =>
+  request<Note>(`/notes/${id}`)
+
+export const publishPage = (noteId: string, data: { title: string; content: string }) =>
+  request<{ id: string; title: string; url: string; created_time: string }>(
+    `/notes/${noteId}/publish`,
+    { method: 'POST', body: JSON.stringify(data) }
+  )
+
+export interface ChildPage {
+  id: string
+  title: string
+  url: string
+  created_time: string
+  parent_id: string
+}
+
+export const fetchPages = () =>
+  request<{ results: ChildPage[] }>('/pages')
+
 export const fetchTodos = () =>
   request<{ results: Note[] }>('/todos')
 

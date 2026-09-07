@@ -23,17 +23,19 @@ export default function NoteList() {
   const isLoading = search ? searchQuery.isLoading : notesQuery.isLoading
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <CaptureForm />
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder="Search notes..."
-        style={{ width: '100%', padding: '8px 12px', border: '1px solid #d4d0de', borderRadius: 10, fontSize: 14, marginBottom: '1rem', boxSizing: 'border-box', background: '#fff', color: '#3a3650' }}
+        style={{ width: '100%', padding: '8px 12px', border: '1px solid #d4d0de', borderRadius: 10, fontSize: 14, marginBottom: '1rem', boxSizing: 'border-box', background: '#fff', color: '#3a3650', flexShrink: 0 }}
       />
-      {isLoading && <p style={{ color: '#8b85a0' }}>Loading...</p>}
-      {notes?.map(n => <NoteCard key={n.id} note={n} />)}
-      {notes && notes.length === 0 && <p style={{ color: '#8b85a0' }}>No notes found.</p>}
+      <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        {isLoading && <p style={{ color: '#8b85a0' }}>Loading...</p>}
+        {notes?.map(n => <NoteCard key={n.id} note={n} />)}
+        {notes && notes.length === 0 && <p style={{ color: '#8b85a0' }}>No notes found.</p>}
+      </div>
     </div>
   )
 }

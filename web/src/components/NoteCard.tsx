@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateNote } from '../api'
+import { useNavigate } from 'react-router-dom'
+import { updateNote, deleteNote } from '../api'
 import type { Note, NotesResponse } from '../types'
 import TagBadge from './TagBadge'
 
@@ -16,8 +17,30 @@ function relativeDate(iso: string) {
 const TODO_TAGS = ['todo', 'to-do', 'to do']
 
 export default function NoteCard({ note }: { note: Note }) {
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const isTodo = note.tags.some(t => TODO_TAGS.includes(t.toLowerCase()))
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteNote(note.id),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['notes'] })
+      const previous = qc.getQueryData<NotesResponse>(['notes'])
+      qc.setQueryData<NotesResponse>(['notes'], old => ({
+        results: (old?.results ?? []).filter(n => n.id !== note.id),
+        has_more: old?.has_more ?? false,
+        next_cursor: old?.next_cursor ?? null,
+      }))
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) qc.setQueryData(['notes'], context.previous)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
 
   const makeToDoMutation = useMutation({
     mutationFn: () => updateNote(note.id, { tags: [...note.tags, 'todo'] }),
@@ -41,14 +64,14 @@ export default function NoteCard({ note }: { note: Note }) {
   })
 
   return (
-    <div style={{ padding: '0.75rem 0', borderBottom: '1px solid #e8e4f0' }}>
+    <div onClick={() => navigate(`/create/${note.id}`)} style={{ padding: '0.75rem 0', borderBottom: '1px solid #e8e4f0', cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{ color: '#8b85a0', fontSize: 13 }}>{relativeDate(note.created_time)}</span>
         <strong style={{ color: '#3a3650' }}>{note.title || '(empty)'}</strong>
         {note.tags.map(t => <TagBadge key={t} tag={t} />)}
         {!isTodo && (
           <button
-            onClick={() => makeToDoMutation.mutate()}
+            onClick={(e) => { e.stopPropagation(); makeToDoMutation.mutate() }}
             disabled={makeToDoMutation.isPending}
             style={{
               background: 'none',
@@ -65,6 +88,24 @@ export default function NoteCard({ note }: { note: Note }) {
             + todo
           </button>
         )}
+        <button
+          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate() }}
+          disabled={deleteMutation.isPending}
+          title="Delete note"
+          style={{
+            background: 'none',
+            border: '1px solid #d4d0de',
+            borderRadius: 8,
+            padding: '1px 7px',
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#c0a0a0',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          &times;
+        </button>
       </div>
       {note.notes && <p style={{ margin: '4px 0 0', color: '#8b85a0', fontSize: 14 }}>{note.notes}</p>}
     </div>

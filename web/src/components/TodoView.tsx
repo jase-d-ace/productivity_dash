@@ -1,7 +1,7 @@
 import { closestCenter, DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchTodos, saveTodoOrder, updateNote } from '../api'
+import { deleteNote, fetchTodos, saveTodoOrder, updateNote } from '../api'
 import type { Note } from '../types'
 import TodoItem from './TodoItem'
 
@@ -33,6 +33,25 @@ export default function TodoView({ activeTaskId, onSetActive }: Props) {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteNote(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['todos'] })
+      const previous = qc.getQueryData<{ results: Note[] }>(['todos'])
+      qc.setQueryData<{ results: Note[] }>(['todos'], old => ({
+        results: (old?.results ?? []).filter(t => t.id !== id),
+      }))
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) qc.setQueryData(['todos'], context.previous)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['todos'] })
+      qc.invalidateQueries({ queryKey: ['notes'] })
     },
   })
 
@@ -73,6 +92,7 @@ export default function TodoView({ activeTaskId, onSetActive }: Props) {
             onToggle={(id, done) => toggleMutation.mutate({ id, done })}
             activeTaskId={activeTaskId}
             onSetActive={onSetActive}
+            onDelete={(id) => deleteMutation.mutate(id)}
           />
         ))}
       </SortableContext>
