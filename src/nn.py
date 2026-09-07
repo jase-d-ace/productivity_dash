@@ -6,6 +6,7 @@ Usage: see docs/cli-usage.md
 
 import argparse
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -24,6 +25,44 @@ HEADERS = {
 }
 
 
+DIM = "\033[2m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+CYAN = "\033[36m"
+GREEN = "\033[32m"
+MUTED_PURPLE = "\033[38;5;141m"
+
+
+def friendly_date(iso_str):
+    """Format an ISO timestamp into a human-readable relative date."""
+    dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    local_dt = dt.astimezone()
+    delta_days = (now.date() - dt.date()).days
+
+    if delta_days == 0:
+        return f"today, {local_dt.strftime('%-I:%M %p').lower()}"
+    if delta_days == 1:
+        return "yesterday"
+    if delta_days < 7:
+        return local_dt.strftime("%A").lower()
+    if now.year == dt.year:
+        return local_dt.strftime("%b %-d")
+    return local_dt.strftime("%b %-d, %Y")
+
+
+def format_entry(page):
+    """Format a single database entry for terminal display."""
+    title = page["properties"]["Name"]["title"]
+    text = title[0]["plain_text"] if title else "(empty)"
+    date = friendly_date(page["created_time"])
+
+    tags_prop = page["properties"].get("Tags", {}).get("multi_select", [])
+    tag_str = "  " + " ".join(f"{CYAN}#{t['name']}{RESET}" for t in tags_prop) if tags_prop else ""
+
+    return f"  {DIM}{MUTED_PURPLE}[{date}]{RESET}  {BOLD}{text}{RESET}{tag_str}"
+
+
 def capture(text, tags=None, body=None):
     """Add a new entry to the Quick Capture database."""
     properties = {"Name": {"title": [{"text": {"content": text}}]}}
@@ -36,9 +75,9 @@ def capture(text, tags=None, body=None):
 
     resp = httpx.post(f"{BASE_URL}/pages", headers=HEADERS, json=payload)
     resp.raise_for_status()
-    parts = [f"Captured: {text}"]
+    parts = [f"{GREEN}Captured:{RESET} {BOLD}{text}{RESET}"]
     if tags:
-        parts.append(f"  #{' #'.join(tags)}")
+        parts.append("  " + " ".join(f"{CYAN}#{t}{RESET}" for t in tags))
     print("".join(parts))
 
 
@@ -64,10 +103,7 @@ def read_recent(n=5):
         return
 
     for page in results["results"]:
-        title = page["properties"]["Name"]["title"]
-        text = title[0]["plain_text"] if title else "(empty)"
-        created = page["created_time"][:10]
-        print(f"  [{created}] {text}")
+        print(format_entry(page))
 
 
 def search(query):
@@ -81,10 +117,7 @@ def search(query):
         return
 
     for page in results["results"]:
-        title = page["properties"]["Name"]["title"]
-        text = title[0]["plain_text"] if title else "(empty)"
-        created = page["created_time"][:10]
-        print(f"  [{created}] {text}")
+        print(format_entry(page))
 
 
 def main():
