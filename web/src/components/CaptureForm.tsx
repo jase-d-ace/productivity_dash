@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { createNote } from '../api'
+import type { Note, NotesResponse } from '../types'
 
 const inputStyle: React.CSSProperties = {
   padding: '8px 12px',
@@ -25,10 +26,28 @@ export default function CaptureForm() {
 
   const mutation = useMutation({
     mutationFn: createNote,
-    onSuccess: () => {
-      setTitle('')
-      setTags('')
-      setBody('')
+    onMutate: async (data) => {
+      await qc.cancelQueries({ queryKey: ['notes'] })
+      const previous = qc.getQueryData<NotesResponse>(['notes'])
+      const optimistic: Note = {
+        id: `temp-${Date.now()}`,
+        title: data.title,
+        tags: data.tags ?? [],
+        notes: data.body ?? '',
+        created_time: new Date().toISOString(),
+        done: false,
+      }
+      qc.setQueryData<NotesResponse>(['notes'], old => ({
+        results: [optimistic, ...(old?.results ?? [])],
+        has_more: old?.has_more ?? false,
+        next_cursor: old?.next_cursor ?? null,
+      }))
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) qc.setQueryData(['notes'], context.previous)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['notes'] })
     },
   })
@@ -38,6 +57,9 @@ export default function CaptureForm() {
     if (!title.trim()) return
     const tagList = tags.split(',').map(t => t.trim()).filter(Boolean)
     mutation.mutate({ title: title.trim(), tags: tagList.length ? tagList : undefined, body: body.trim() || undefined })
+    setTitle('')
+    setTags('')
+    setBody('')
   }
 
   return (

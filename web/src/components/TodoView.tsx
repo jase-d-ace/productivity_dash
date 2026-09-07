@@ -15,7 +15,20 @@ export default function TodoView() {
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, done }: { id: string; done: boolean }) => updateNote(id, { done }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos'] }),
+    onMutate: async ({ id, done }) => {
+      await qc.cancelQueries({ queryKey: ['todos'] })
+      const previous = qc.getQueryData<{ results: Note[] }>(['todos'])
+      qc.setQueryData<{ results: Note[] }>(['todos'], old => ({
+        results: (old?.results ?? []).map(t => t.id === id ? { ...t, done } : t),
+      }))
+      return { previous }
+    },
+    onError: (_err, _data, context) => {
+      if (context?.previous) qc.setQueryData(['todos'], context.previous)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['todos'] })
+    },
   })
 
   const reorderMutation = useMutation({
