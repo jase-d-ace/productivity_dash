@@ -1,8 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
-import NoteList from './components/NoteList'
-import TodoView from './components/TodoView'
+import Dashboard from './components/Dashboard'
 
 const queryClient = new QueryClient()
 
@@ -12,8 +11,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<NoteList />} />
-            <Route path="todos" element={<TodoView />} />
+            <Route index element={<Dashboard />} />
           </Route>
         </Routes>
       </BrowserRouter>
