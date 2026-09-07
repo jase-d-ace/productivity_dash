@@ -16,9 +16,10 @@
 # @raycast.description Capture a thought to Notion via nn
 # @raycast.author jase
 
-export PATH="/Users/jase/.pyenv/shims:/usr/local/bin:/usr/bin:$PATH"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+export PATH="$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:$PATH"
 
-CMD=(python3 /Users/jase/playground/notion_connector/src/nn.py "$1")
+CMD=(python3 "$SCRIPT_DIR/src/nn.py" "$1")
 
 if [ -n "$2" ]; then
   CMD+=(-t "$2")
