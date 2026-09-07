@@ -49,14 +49,21 @@ export default function CaptureForm() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['todos'] })
     },
   })
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
-    const tagList = tags.split(',').map(t => t.trim()).filter(Boolean)
-    mutation.mutate({ title: title.trim(), tags: tagList.length ? tagList : undefined, body: body.trim() || undefined })
+    const rawTitle = title.trim()
+    // Extract #hashtags from title and merge with explicit tags
+    const hashtagPattern = /#([\w-]+)/g
+    const hashTags = [...rawTitle.matchAll(hashtagPattern)].map(m => m[1])
+    const cleanTitle = rawTitle.replace(hashtagPattern, '').replace(/\s{2,}/g, ' ').trim()
+    const explicitTags = tags.split(',').map(t => t.replace(/^#/, '').trim()).filter(Boolean)
+    const allTags = [...new Set([...explicitTags, ...hashTags])]
+    mutation.mutate({ title: cleanTitle || rawTitle, tags: allTags.length ? allTags : undefined, body: body.trim() || undefined })
     setTitle('')
     setTags('')
     setBody('')
