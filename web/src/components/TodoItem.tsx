@@ -18,19 +18,19 @@ export default function TodoItem({ todo, onToggle }: Props) {
     alignItems: 'center',
     gap: 10,
     padding: '8px 0',
-    borderBottom: '1px solid #e0d8cf',
+    borderBottom: '1px solid #e8e4f0',
   }
 
   return (
     <div ref={setNodeRef} style={style}>
-      <span {...attributes} {...listeners} style={{ cursor: 'grab', userSelect: 'none', color: '#c9c0b5' }}>&#x2630;</span>
+      <span {...attributes} {...listeners} style={{ cursor: 'grab', userSelect: 'none', color: '#c5c0d4' }}>&#x2630;</span>
       <input
         type="checkbox"
         checked={todo.done}
         onChange={() => onToggle(todo.id, !todo.done)}
-        style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#5b7f6a' }}
+        style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#9b8ec4' }}
       />
-      <span style={{ textDecoration: todo.done ? 'line-through' : 'none', color: todo.done ? '#b5aa9e' : '#2d2a26' }}>
+      <span style={{ textDecoration: todo.done ? 'line-through' : 'none', color: todo.done ? '#b5b0c8' : '#3a3650' }}>
         {todo.title}
       </span>
       {todo.tags.filter(t => !['todo', 'to-do', 'to do'].includes(t.toLowerCase())).map(t => (
