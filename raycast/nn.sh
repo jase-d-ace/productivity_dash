@@ -17,16 +17,32 @@
 # @raycast.author jase
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-export PATH="$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:$PATH"
+source "$SCRIPT_DIR/.env" 2>/dev/null
 
-CMD=(python3 "$SCRIPT_DIR/src/nn.py" "$1")
+INKWELL_URL="${INKWELL_URL:-https://productivitydash-production.up.railway.app}"
+
+BODY="{\"title\": \"$1\""
 
 if [ -n "$2" ]; then
-  CMD+=(-t "$2")
+  TAGS=$(echo "$2" | sed 's/[^,]*/"&"/g; s/^/[/; s/$/]/')
+  BODY="$BODY, \"tags\": $TAGS"
 fi
 
 if [ -n "$3" ]; then
-  CMD+=(-b "$3")
+  BODY="$BODY, \"body\": \"$3\""
 fi
 
-"${CMD[@]}"
+BODY="$BODY}"
+
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$INKWELL_URL/api/notes" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_SECRET" \
+  -d "$BODY")
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+
+if [ "$HTTP_CODE" = "201" ]; then
+  echo "Saved to Inkwell"
+else
+  echo "Error ($HTTP_CODE)"
+fi
