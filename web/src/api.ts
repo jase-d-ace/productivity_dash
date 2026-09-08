@@ -46,6 +46,9 @@ export interface ChildPage {
 export const fetchPages = () =>
   request<{ results: ChildPage[] }>('/pages')
 
+export const deletePage = (id: string) =>
+  request<{ id: string }>(`/pages/${id}`, { method: 'DELETE' })
+
 export const fetchTodos = () =>
   request<{ results: Note[] }>('/todos')
 
