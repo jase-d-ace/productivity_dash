@@ -21,13 +21,19 @@ import notion_client as nc
 
 API_SECRET = os.environ.get("API_SECRET")
 
+if not API_SECRET and os.environ.get("RAILWAY_ENVIRONMENT"):
+    raise RuntimeError("API_SECRET must be set in production")
+
 CORS_ORIGINS = [
     o.strip()
     for o in os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
     if o.strip()
 ]
 
-app = FastAPI(title="Inkwell")
+app = FastAPI(
+    title="Inkwell",
+    openapi_url=None if API_SECRET else "/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +45,10 @@ app.add_middleware(
 
 async def verify_api_key(request: Request):
     if API_SECRET is None:
+        return
+    # Browsers send Sec-Fetch-Site automatically (can't be spoofed by JS).
+    # same-origin = the React frontend served from this same server.
+    if request.headers.get("Sec-Fetch-Site") == "same-origin":
         return
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
