@@ -5,8 +5,11 @@ from __future__ import annotations
 import hmac
 import json
 import os
+import sys
 from pathlib import Path
 from typing import List, Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -137,6 +140,11 @@ def publish_page(note_id: str, payload: PublishPageBody, _auth=Depends(verify_ap
 @app.get("/api/pages")
 def list_pages(_auth=Depends(verify_api_key)):
     return {"results": nc.list_child_pages()}
+
+
+@app.delete("/api/pages/{page_id}")
+def delete_page(page_id: str, _auth=Depends(verify_api_key)):
+    return nc.archive_page(page_id)
 
 
 # --- Todos ---

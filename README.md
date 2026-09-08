@@ -127,6 +127,19 @@ docs/                  # Setup guides, usage docs, iOS shortcut guide, roadmap
 .env.example           # Template for environment variables
 ```
 
+## Deployment (Railway)
+
+1. Push your repo to GitHub
+2. Create a new project on [Railway](https://railway.app) and connect your repo — it auto-detects the Dockerfile
+3. Set environment variables in the Railway dashboard:
+   - `NOTION_API_KEY` — your Notion integration token
+   - `NOTION_DB_ID` — your Notion database ID
+   - `API_SECRET` — a random secret for bearer token auth
+   - `CORS_ORIGINS` — your Railway public URL (e.g. `https://inkwell-production.up.railway.app`)
+4. Deploy — Railway builds and starts the service automatically
+
+**Note:** Todo drag-and-drop ordering uses local filesystem storage, which resets on each deploy. This is a known limitation.
+
 ## Roadmap
 
 See [docs/roadmap.md](docs/roadmap.md) for planned features.
