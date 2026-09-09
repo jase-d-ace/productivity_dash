@@ -279,7 +279,10 @@ def list_todos() -> list[dict]:
     for variant in todo_variants:
         try:
             data = query_db(
-                filter={"property": "Tags", "multi_select": {"contains": variant}},
+                filter={"and": [
+                    {"property": "Tags", "multi_select": {"contains": variant}},
+                    {"property": "Archived", "checkbox": {"equals": False}},
+                ]},
                 sorts=[{"timestamp": "created_time", "direction": "descending"}],
             )
         except httpx.HTTPStatusError as e:
