@@ -10,6 +10,9 @@ const inputStyle: React.CSSProperties = {
   fontSize: 15,
   background: '#fff',
   color: '#3a3650',
+  boxSizing: 'border-box',
+  width: '100%',
+  minWidth: 0,
 }
 
 const smallInputStyle: React.CSSProperties = {
@@ -74,9 +77,9 @@ export default function CaptureForm() {
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem', padding: '1rem', background: '#f8f5fc', borderRadius: 10, border: '1px solid #e4dff0' }}>
       <input value={title} onChange={e => setTitle(e.target.value)} placeholder="What's on your mind?" style={inputStyle} />
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input value={tags} onChange={e => setTags(e.target.value)} placeholder="Tags (comma-separated)" style={{ ...smallInputStyle, flex: 1 }} />
-        <input value={body} onChange={e => setBody(e.target.value)} placeholder="Notes (optional)" style={{ ...smallInputStyle, flex: 2 }} />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input value={tags} onChange={e => setTags(e.target.value)} placeholder="Tags (comma-separated)" style={{ ...smallInputStyle, flex: '1 1 120px' }} />
+        <input value={body} onChange={e => setBody(e.target.value)} placeholder="Notes (optional)" style={{ ...smallInputStyle, flex: '2 1 200px' }} />
       </div>
       <button type="submit" disabled={mutation.isPending} style={{ alignSelf: 'flex-start', padding: '7px 18px', background: '#9b8ec4', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, letterSpacing: '0.01em' }}>
         {mutation.isPending ? 'Saving...' : 'Capture'}
