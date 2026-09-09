@@ -39,6 +39,7 @@ export default function NoteCard({ note, onPinToggle }: { note: Note; onPinToggl
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['notes'] })
       qc.invalidateQueries({ queryKey: ['todos'] })
+      qc.invalidateQueries({ queryKey: ['archived'] })
     },
   })
 

@@ -79,6 +79,11 @@ def list_notes(start_cursor: Optional[str] = None, page_size: int = 20, _auth=De
     return nc.list_notes(start_cursor=start_cursor, page_size=page_size)
 
 
+@app.get("/api/notes/archived")
+def list_archived_notes(_auth=Depends(verify_api_key)):
+    return {"results": nc.list_archived_notes()}
+
+
 @app.get("/api/notes/pinned")
 def list_pinned_notes(_auth=Depends(verify_api_key)):
     return {"results": nc.list_pinned_notes()}
@@ -139,6 +144,16 @@ def update_note(note_id: str, payload: UpdateNoteBody, _auth=Depends(verify_api_
 
 @app.delete("/api/notes/{note_id}")
 def delete_note(note_id: str, _auth=Depends(verify_api_key)):
+    return nc.update_page(note_id, {"Archived": {"checkbox": True}})
+
+
+@app.post("/api/notes/{note_id}/restore")
+def restore_note(note_id: str, _auth=Depends(verify_api_key)):
+    return nc.update_page(note_id, {"Archived": {"checkbox": False}})
+
+
+@app.delete("/api/notes/{note_id}/permanent")
+def permanent_delete_note(note_id: str, _auth=Depends(verify_api_key)):
     return nc.archive_page(note_id)
 
 

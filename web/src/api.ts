@@ -27,7 +27,16 @@ export const updateNote = (id: string, data: Partial<{ title: string; tags: stri
   request<Note>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
 
 export const deleteNote = (id: string) =>
-  request<{ id: string }>(`/notes/${id}`, { method: 'DELETE' })
+  request<Note>(`/notes/${id}`, { method: 'DELETE' })
+
+export const fetchArchivedNotes = () =>
+  request<{ results: Note[] }>('/notes/archived')
+
+export const restoreNote = (id: string) =>
+  request<Note>(`/notes/${id}/restore`, { method: 'POST' })
+
+export const permanentDeleteNote = (id: string) =>
+  request<{ id: string }>(`/notes/${id}/permanent`, { method: 'DELETE' })
 
 export const fetchNote = (id: string) =>
   request<Note>(`/notes/${id}`)

@@ -6,6 +6,7 @@ export interface Note {
   created_time: string
   done: boolean
   pinned: boolean
+  archived: boolean
 }
 
 export interface NotesResponse {

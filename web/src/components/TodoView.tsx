@@ -52,6 +52,7 @@ export default function TodoView({ activeTaskId, onSetActive }: Props) {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ['todos'] })
       qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['archived'] })
     },
   })
 
@@ -78,9 +79,9 @@ export default function TodoView({ activeTaskId, onSetActive }: Props) {
     reorderMutation.mutate(reordered.map(t => t.id))
   }
 
-  if (isLoading) return <p style={{ color: '#8b85a0' }}>Loading...</p>
+  if (isLoading) return <p style={{ color: '#8b85a0', fontSize: 14 }}>Loading...</p>
 
-  if (todos.length === 0) return <p style={{ color: '#8b85a0' }}>No todos yet. Tag a note with #todo to see it here.</p>
+  if (todos.length === 0) return <p style={{ color: '#8b85a0', fontSize: 14 }}>No todos yet. Tag a note with #todo to see it here.</p>
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

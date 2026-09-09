@@ -28,6 +28,7 @@ def _serialize_page(page: dict) -> dict:
     notes_arr = props.get("Notes", {}).get("rich_text", [])
     done = props.get("Done", {}).get("checkbox", False)
     pinned = props.get("Pinned", {}).get("checkbox", False)
+    archived = props.get("Archived", {}).get("checkbox", False)
 
     return {
         "id": page["id"],
@@ -37,6 +38,7 @@ def _serialize_page(page: dict) -> dict:
         "created_time": page["created_time"],
         "done": done,
         "pinned": pinned,
+        "archived": archived,
     }
 
 
@@ -52,9 +54,12 @@ def query_db(**kwargs) -> dict:
 
 
 def list_notes(start_cursor: str | None = None, page_size: int = 20) -> dict:
-    """List notes with pagination, excluding pinned. Returns {results, has_more, next_cursor}."""
+    """List notes with pagination, excluding pinned and archived. Returns {results, has_more, next_cursor}."""
     params: dict = {
-        "filter": {"property": "Pinned", "checkbox": {"equals": False}},
+        "filter": {"and": [
+            {"property": "Pinned", "checkbox": {"equals": False}},
+            {"property": "Archived", "checkbox": {"equals": False}},
+        ]},
         "sorts": [{"timestamp": "created_time", "direction": "descending"}],
         "page_size": page_size,
     }
@@ -69,18 +74,33 @@ def list_notes(start_cursor: str | None = None, page_size: int = 20) -> dict:
 
 
 def list_pinned_notes() -> list[dict]:
-    """List notes where Pinned is checked."""
+    """List notes where Pinned is checked, excluding archived."""
     data = query_db(
-        filter={"property": "Pinned", "checkbox": {"equals": True}},
+        filter={"and": [
+            {"property": "Pinned", "checkbox": {"equals": True}},
+            {"property": "Archived", "checkbox": {"equals": False}},
+        ]},
+        sorts=[{"timestamp": "created_time", "direction": "descending"}],
+    )
+    return [_serialize_page(p) for p in data["results"]]
+
+
+def list_archived_notes() -> list[dict]:
+    """List notes where Archived is checked."""
+    data = query_db(
+        filter={"property": "Archived", "checkbox": {"equals": True}},
         sorts=[{"timestamp": "created_time", "direction": "descending"}],
     )
     return [_serialize_page(p) for p in data["results"]]
 
 
 def search_notes(query: str) -> list[dict]:
-    """Search entries by title keyword."""
+    """Search entries by title keyword, excluding archived."""
     data = query_db(
-        filter={"property": "Name", "title": {"contains": query}},
+        filter={"and": [
+            {"property": "Name", "title": {"contains": query}},
+            {"property": "Archived", "checkbox": {"equals": False}},
+        ]},
         sorts=[{"timestamp": "created_time", "direction": "descending"}],
     )
     return [_serialize_page(p) for p in data["results"]]
