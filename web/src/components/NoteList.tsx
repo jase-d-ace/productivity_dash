@@ -1,11 +1,41 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { fetchNotes, searchNotes } from '../api'
+import { fetchNotes, searchNotes, updateNote } from '../api'
+import type { Note, NotesResponse } from '../types'
 import CaptureForm from './CaptureForm'
 import NoteCard from './NoteCard'
 
 export default function NoteList() {
+  const qc = useQueryClient()
   const [search, setSearch] = useState('')
+
+  const pinMutation = useMutation({
+    mutationFn: (id: string) => updateNote(id, { pinned: true }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['notes'] })
+      await qc.cancelQueries({ queryKey: ['pinned'] })
+      const prevNotes = qc.getQueryData<NotesResponse>(['notes'])
+      const prevPinned = qc.getQueryData<{ results: Note[] }>(['pinned'])
+      const note = prevNotes?.results.find(n => n.id === id)
+      qc.setQueryData<NotesResponse>(['notes'], old => ({
+        results: (old?.results ?? []).filter(n => n.id !== id),
+        has_more: old?.has_more ?? false,
+        next_cursor: old?.next_cursor ?? null,
+      }))
+      if (note) {
+        qc.setQueryData(['pinned'], { results: [{ ...note, pinned: true }, ...(prevPinned?.results ?? [])] })
+      }
+      return { prevNotes, prevPinned }
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prevNotes) qc.setQueryData(['notes'], ctx.prevNotes)
+      if (ctx?.prevPinned) qc.setQueryData(['pinned'], ctx.prevPinned)
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['pinned'] })
+    },
+  })
 
   const notesQuery = useQuery({
     queryKey: ['notes'],
@@ -33,7 +63,7 @@ export default function NoteList() {
       />
       <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {isLoading && <p style={{ color: '#8b85a0' }}>Loading...</p>}
-        {notes?.map(n => <NoteCard key={n.id} note={n} />)}
+        {notes?.map(n => <NoteCard key={n.id} note={n} onPinToggle={() => pinMutation.mutate(n.id)} />)}
         {notes && notes.length === 0 && <p style={{ color: '#8b85a0' }}>No notes found.</p>}
       </div>
     </div>

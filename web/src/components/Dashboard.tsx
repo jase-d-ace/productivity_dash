@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchTodos } from '../api'
+import { fetchPinnedNotes, fetchTodos } from '../api'
 import type { Note } from '../types'
 import NoteList from './NoteList'
+import PinnedWidget from './PinnedWidget'
 import PomodoroTimer from './PomodoroTimer'
 import TodoView from './TodoView'
 import PagesWidget from './PagesWidget'
@@ -34,6 +35,8 @@ const widgetHeaderStyle: React.CSSProperties = {
 export default function Dashboard() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const { data } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  const pinnedQuery = useQuery({ queryKey: ['pinned'], queryFn: fetchPinnedNotes })
+  const hasPinned = (pinnedQuery.data?.results ?? []).length > 0
   const todos: Note[] = data?.results ?? []
   const activeTodo = todos.find(t => t.id === activeTaskId) ?? null
 
@@ -56,6 +59,12 @@ export default function Dashboard() {
           <NoteList />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0, overflow: 'hidden' }}>
+          {hasPinned && (
+            <div style={widgetStyle}>
+              <div style={widgetHeaderStyle}>Pinned</div>
+              <PinnedWidget />
+            </div>
+          )}
           <div style={widgetStyle}>
             <div style={widgetHeaderStyle}>Pomodoro</div>
             <PomodoroTimer activeTodo={activeTodo} onClearActive={() => setActiveTaskId(null)} />

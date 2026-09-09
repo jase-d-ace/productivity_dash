@@ -27,6 +27,7 @@ def _serialize_page(page: dict) -> dict:
     tags_arr = props.get("Tags", {}).get("multi_select", [])
     notes_arr = props.get("Notes", {}).get("rich_text", [])
     done = props.get("Done", {}).get("checkbox", False)
+    pinned = props.get("Pinned", {}).get("checkbox", False)
 
     return {
         "id": page["id"],
@@ -35,6 +36,7 @@ def _serialize_page(page: dict) -> dict:
         "notes": notes_arr[0]["plain_text"] if notes_arr else "",
         "created_time": page["created_time"],
         "done": done,
+        "pinned": pinned,
     }
 
 
@@ -50,8 +52,9 @@ def query_db(**kwargs) -> dict:
 
 
 def list_notes(start_cursor: str | None = None, page_size: int = 20) -> dict:
-    """List notes with pagination. Returns {results, has_more, next_cursor}."""
+    """List notes with pagination, excluding pinned. Returns {results, has_more, next_cursor}."""
     params: dict = {
+        "filter": {"property": "Pinned", "checkbox": {"equals": False}},
         "sorts": [{"timestamp": "created_time", "direction": "descending"}],
         "page_size": page_size,
     }
@@ -63,6 +66,15 @@ def list_notes(start_cursor: str | None = None, page_size: int = 20) -> dict:
         "has_more": data.get("has_more", False),
         "next_cursor": data.get("next_cursor"),
     }
+
+
+def list_pinned_notes() -> list[dict]:
+    """List notes where Pinned is checked."""
+    data = query_db(
+        filter={"property": "Pinned", "checkbox": {"equals": True}},
+        sorts=[{"timestamp": "created_time", "direction": "descending"}],
+    )
+    return [_serialize_page(p) for p in data["results"]]
 
 
 def search_notes(query: str) -> list[dict]:

@@ -36,6 +36,7 @@ export default function CaptureForm() {
         notes: data.body ?? '',
         created_time: new Date().toISOString(),
         done: false,
+        pinned: false,
       }
       qc.setQueryData<NotesResponse>(['notes'], old => ({
         results: [optimistic, ...(old?.results ?? [])],

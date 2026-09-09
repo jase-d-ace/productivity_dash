@@ -5,6 +5,7 @@ export interface Note {
   notes: string
   created_time: string
   done: boolean
+  pinned: boolean
 }
 
 export interface NotesResponse {

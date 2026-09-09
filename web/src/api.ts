@@ -20,7 +20,10 @@ export const searchNotes = (q: string) =>
 export const createNote = (data: { title: string; tags?: string[]; body?: string }) =>
   request<Note>('/notes', { method: 'POST', body: JSON.stringify(data) })
 
-export const updateNote = (id: string, data: Partial<{ title: string; tags: string[]; notes: string; done: boolean }>) =>
+export const fetchPinnedNotes = () =>
+  request<{ results: Note[] }>('/notes/pinned')
+
+export const updateNote = (id: string, data: Partial<{ title: string; tags: string[]; notes: string; done: boolean; pinned: boolean }>) =>
   request<Note>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
 
 export const deleteNote = (id: string) =>

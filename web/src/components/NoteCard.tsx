@@ -16,7 +16,7 @@ function relativeDate(iso: string) {
 
 const TODO_TAGS = ['todo', 'to-do', 'to do']
 
-export default function NoteCard({ note }: { note: Note }) {
+export default function NoteCard({ note, onPinToggle }: { note: Note; onPinToggle?: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const isTodo = note.tags.some(t => TODO_TAGS.includes(t.toLowerCase()))
@@ -68,6 +68,25 @@ export default function NoteCard({ note }: { note: Note }) {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{ color: '#8b85a0', fontSize: 13 }}>{relativeDate(note.created_time)}</span>
         <strong style={{ flex: 1, color: '#3a3650', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note.title || '(empty)'}</strong>
+        {onPinToggle && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPinToggle() }}
+            title={note.pinned ? 'Unpin' : 'Pin'}
+            style={{
+              background: 'none',
+              border: '1px solid #d4d0de',
+              borderRadius: 8,
+              padding: '1px 7px',
+              fontSize: 11,
+              fontWeight: 600,
+              color: note.pinned ? '#d4a017' : '#9b8ec4',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {note.pinned ? '\u2605' : '\u2606'}
+          </button>
+        )}
         {!isTodo && (
           <button
             onClick={(e) => { e.stopPropagation(); makeToDoMutation.mutate() }}

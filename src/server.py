@@ -79,6 +79,11 @@ def list_notes(start_cursor: Optional[str] = None, page_size: int = 20, _auth=De
     return nc.list_notes(start_cursor=start_cursor, page_size=page_size)
 
 
+@app.get("/api/notes/pinned")
+def list_pinned_notes(_auth=Depends(verify_api_key)):
+    return {"results": nc.list_pinned_notes()}
+
+
 @app.get("/api/notes/search")
 def search_notes(q: str, _auth=Depends(verify_api_key)):
     return {"results": nc.search_notes(q)}
@@ -111,6 +116,7 @@ class UpdateNoteBody(BaseModel):
     tags: Optional[List[str]] = None
     notes: Optional[str] = None
     done: Optional[bool] = None
+    pinned: Optional[bool] = None
 
 
 @app.patch("/api/notes/{note_id}")
@@ -124,6 +130,8 @@ def update_note(note_id: str, payload: UpdateNoteBody, _auth=Depends(verify_api_
         properties["Notes"] = {"rich_text": [{"text": {"content": payload.notes}}]}
     if payload.done is not None:
         properties["Done"] = {"checkbox": payload.done}
+    if payload.pinned is not None:
+        properties["Pinned"] = {"checkbox": payload.pinned}
     if not properties:
         raise HTTPException(status_code=400, detail="No fields to update")
     return nc.update_page(note_id, properties)
