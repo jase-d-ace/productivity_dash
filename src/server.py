@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -94,13 +94,16 @@ def get_note(note_id: str, _auth=Depends(verify_api_key)):
 
 class CreateNoteBody(BaseModel):
     title: str
-    tags: Optional[List[str]] = None
+    tags: Optional[Union[List[str], str]] = None
     body: Optional[str] = None
 
 
 @app.post("/api/notes", status_code=201)
 def create_note(payload: CreateNoteBody, _auth=Depends(verify_api_key)):
-    return nc.create_page(payload.title, tags=payload.tags, body=payload.body)
+    tags = payload.tags
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",") if t.strip()]
+    return nc.create_page(payload.title, tags=tags, body=payload.body)
 
 
 class UpdateNoteBody(BaseModel):
