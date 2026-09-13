@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hmac
 import json
+import logging
 import os
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -19,7 +21,49 @@ from starlette.requests import Request
 
 import notion_client as nc
 
+logger = logging.getLogger("inkwell")
+
 API_SECRET = os.environ.get("API_SECRET")
+
+# --- Scheduler setup ---
+
+NOTIFICATION_HOUR = int(os.environ.get("NOTIFICATION_HOUR", "7"))
+NOTIFICATION_TZ = os.environ.get("NOTIFICATION_TZ", "America/New_York")
+TWILIO_CONFIGURED = all(
+    os.environ.get(k) for k in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER", "TWILIO_TO_NUMBER")
+)
+
+scheduler = None
+
+if TWILIO_CONFIGURED:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.cron import CronTrigger
+
+    from notify import send_todo_sms
+
+    def _scheduled_send():
+        try:
+            result = send_todo_sms()
+            logger.info("Scheduled SMS: %s", result)
+        except Exception:
+            logger.exception("Failed to send scheduled SMS")
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        _scheduled_send,
+        CronTrigger(hour=NOTIFICATION_HOUR, timezone=NOTIFICATION_TZ),
+        id="daily_todo_sms",
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if scheduler:
+        scheduler.start()
+        logger.info("Scheduler started — daily SMS at %s:00 %s", NOTIFICATION_HOUR, NOTIFICATION_TZ)
+    yield
+    if scheduler:
+        scheduler.shutdown()
 
 if not API_SECRET and os.environ.get("RAILWAY_ENVIRONMENT"):
     raise RuntimeError("API_SECRET must be set in production")
@@ -33,6 +77,7 @@ CORS_ORIGINS = [
 app = FastAPI(
     title="Inkwell",
     openapi_url=None if API_SECRET else "/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -235,6 +280,17 @@ class TodoOrderBody(BaseModel):
 def update_todo_order(payload: TodoOrderBody, _auth=Depends(verify_api_key)):
     _save_todo_order(payload.order)
     return {"ok": True}
+
+
+# --- Notifications ---
+
+
+@app.post("/api/notifications/send-todos")
+def send_todos(_auth=Depends(verify_api_key)):
+    if not TWILIO_CONFIGURED:
+        raise HTTPException(status_code=503, detail="Twilio not configured")
+    from notify import send_todo_sms
+    return send_todo_sms()
 
 
 # --- Static files (production) ---
