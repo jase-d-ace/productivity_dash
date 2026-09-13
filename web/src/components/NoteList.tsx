@@ -119,12 +119,22 @@ export default function NoteList() {
           padding-bottom: 0;
         }
       `}</style>
-      <input
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Search notes... (tag:name to filter by tag)"
-        style={{ width: '100%', padding: '8px 12px', border: '1px solid #d4d0de', borderRadius: 10, fontSize: 14, marginBottom: '1rem', boxSizing: 'border-box', background: '#fff', color: '#3a3650', flexShrink: 0 }}
-      />
+      <div style={{ position: 'relative', marginBottom: '1rem', flexShrink: 0 }}>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search notes... (tag:name to filter by tag)"
+          style={{ width: '100%', padding: '8px 12px', paddingRight: search ? 32 : 12, border: '1px solid #d4d0de', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: '#fff', color: '#3a3650' }}
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9a93a8', cursor: 'pointer', fontSize: 16, padding: '0 4px', lineHeight: 1 }}
+          >
+            &times;
+          </button>
+        )}
+      </div>
       <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {isLoading && <p style={{ color: '#8b85a0' }}>Loading...</p>}
         {allNotes?.map(n => (
