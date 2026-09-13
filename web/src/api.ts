@@ -41,6 +41,9 @@ export const permanentDeleteNote = (id: string) =>
 export const fetchNote = (id: string) =>
   request<Note>(`/notes/${id}`)
 
+export const expandNote = (noteId: string) =>
+  request<{ prompts: string[] }>(`/notes/${noteId}/expand`, { method: 'POST' })
+
 export const publishPage = (noteId: string, data: { title: string; content: string }) =>
   request<{ id: string; title: string; url: string; created_time: string }>(
     `/notes/${noteId}/publish`,

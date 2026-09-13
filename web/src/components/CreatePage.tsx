@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { fetchNote, publishPage } from '../api'
+import { fetchNote, publishPage, expandNote } from '../api'
 import type { Note } from '../types'
 import PomodoroTimer from './PomodoroTimer'
 
@@ -81,6 +81,17 @@ export default function CreatePage() {
   const mutation = useMutation({
     mutationFn: () => publishPage(noteId!, { title: note!.title, content }),
     onSuccess: () => navigate('/'),
+  })
+
+  const expandMutation = useMutation({
+    mutationFn: () => expandNote(noteId!),
+    onSuccess: (data) => {
+      const questions = data.prompts.map(q => `## ${q}\n\n\n`).join('\n')
+      setContent(prev => {
+        const separator = prev.trim() ? '\n\n' : ''
+        return prev + separator + questions
+      })
+    },
   })
 
   const fakeNote: Note | null = note ? { ...note } : null
@@ -268,28 +279,51 @@ export default function CreatePage() {
             </p>
           </div>
 
-          <button
-            onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || !content.trim()}
-            style={{
-              marginTop: '0.25rem',
-              padding: '0.5rem 1.25rem',
-              background: '#9b8ec4',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: mutation.isPending || !content.trim() ? 'not-allowed' : 'pointer',
-              opacity: mutation.isPending || !content.trim() ? 0.6 : 1,
-            }}
-          >
-            {mutation.isPending ? 'Publishing...' : 'Publish to Notion'}
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginTop: '0.25rem' }}>
+            <button
+              onClick={() => mutation.mutate()}
+              disabled={mutation.isPending || !content.trim()}
+              style={{
+                padding: '0.5rem 1.25rem',
+                background: '#9b8ec4',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: mutation.isPending || !content.trim() ? 'not-allowed' : 'pointer',
+                opacity: mutation.isPending || !content.trim() ? 0.6 : 1,
+              }}
+            >
+              {mutation.isPending ? 'Publishing...' : 'Publish to Notion'}
+            </button>
+            <button
+              onClick={() => expandMutation.mutate()}
+              disabled={expandMutation.isPending}
+              style={{
+                padding: '0.5rem 1.25rem',
+                background: 'transparent',
+                color: '#9b8ec4',
+                border: '1px solid #9b8ec4',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: expandMutation.isPending ? 'not-allowed' : 'pointer',
+                opacity: expandMutation.isPending ? 0.6 : 1,
+              }}
+            >
+              {expandMutation.isPending ? 'Thinking...' : 'Expand with AI'}
+            </button>
+          </div>
 
           {mutation.isError && (
             <p style={{ color: '#e74c3c', fontSize: 13, marginTop: '0.5rem' }}>
               Failed to publish. Please try again.
+            </p>
+          )}
+          {expandMutation.isError && (
+            <p style={{ color: '#e74c3c', fontSize: 13, marginTop: '0.5rem' }}>
+              Failed to generate questions. Please try again.
             </p>
           )}
 

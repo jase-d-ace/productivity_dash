@@ -157,6 +157,38 @@ def permanent_delete_note(note_id: str, _auth=Depends(verify_api_key)):
     return nc.archive_page(note_id)
 
 
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+
+
+@app.post("/api/notes/{note_id}/expand")
+def expand_note(note_id: str, _auth=Depends(verify_api_key)):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=501, detail="AI expansion not configured")
+    import anthropic
+    page = nc.get_page(note_id)
+    context = f"Title: {page['title']}"
+    if page.get("tags"):
+        context += f"\nTags: {', '.join(page['tags'])}"
+    if page.get("notes"):
+        context += f"\nNotes: {page['notes']}"
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    message = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=512,
+        system=(
+            "You are a thought partner helping someone develop an idea. "
+            "Given the note title and any existing context, generate 4-5 specific, "
+            "open-ended questions that help explore the idea deeper. Be specific to "
+            "the topic. Do not be generic. Return only the questions, one per line, "
+            "without numbering or bullets."
+        ),
+        messages=[{"role": "user", "content": context}],
+    )
+    raw = message.content[0].text.strip()
+    prompts = [q.strip() for q in raw.split("\n") if q.strip()]
+    return {"prompts": prompts}
+
+
 class PublishPageBody(BaseModel):
     title: str
     content: str
