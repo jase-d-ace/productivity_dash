@@ -120,8 +120,8 @@ def _save_todo_order(order: List[str]):
 
 
 @app.get("/api/notes")
-def list_notes(start_cursor: Optional[str] = None, page_size: int = 20, _auth=Depends(verify_api_key)):
-    return nc.list_notes(start_cursor=start_cursor, page_size=page_size)
+def list_notes(start_cursor: Optional[str] = None, page_size: int = 20, tag: Optional[str] = None, _auth=Depends(verify_api_key)):
+    return nc.list_notes(start_cursor=start_cursor, page_size=page_size, tag=tag)
 
 
 @app.get("/api/notes/archived")

@@ -1,13 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { fetchNotes, searchNotes, updateNote } from '../api'
 import type { Note, NotesResponse } from '../types'
 import CaptureForm from './CaptureForm'
 import NoteCard from './NoteCard'
 
+function parseSearch(search: string): { type: 'tag'; tags: string[] } | { type: 'text'; value: string } | null {
+  const trimmed = search.trim()
+  if (!trimmed) return null
+  const tagMatch = trimmed.match(/^tag:(.+)$/i)
+  if (tagMatch) {
+    const tags = tagMatch[1].split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    return tags.length ? { type: 'tag', tags } : null
+  }
+  return { type: 'text', value: trimmed }
+}
+
+function noteMatchesTags(note: Note, filterTags: string[]): boolean {
+  return filterTags.some(filter =>
+    note.tags.some(tag => tag.toLowerCase().includes(filter))
+  )
+}
+
 export default function NoteList() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
+  const parsed = parseSearch(search)
 
   const pinMutation = useMutation({
     mutationFn: (id: string) => updateNote(id, { pinned: true }),
@@ -37,34 +55,84 @@ export default function NoteList() {
     },
   })
 
+  const filterTags = parsed?.type === 'tag' ? parsed.tags : undefined
+
   const notesQuery = useQuery({
     queryKey: ['notes'],
     queryFn: () => fetchNotes(),
-    enabled: !search,
+    enabled: parsed?.type !== 'text',
   })
 
   const searchQuery = useQuery({
-    queryKey: ['notes', 'search', search],
-    queryFn: () => searchNotes(search),
-    enabled: !!search,
+    queryKey: ['notes', 'search', parsed?.type === 'text' ? parsed.value : ''],
+    queryFn: () => searchNotes((parsed as { type: 'text'; value: string }).value),
+    enabled: parsed?.type === 'text',
   })
 
-  const notes = search ? searchQuery.data?.results : notesQuery.data?.results
-  const isLoading = search ? searchQuery.isLoading : notesQuery.isLoading
+  const allNotes = parsed?.type === 'text' ? searchQuery.data?.results : notesQuery.data?.results
+  const isLoading = parsed?.type === 'text' ? searchQuery.isLoading : notesQuery.isLoading
+
+  const notes = useMemo(() => {
+    if (!allNotes) return undefined
+    if (!filterTags) return allNotes
+    return allNotes.filter(n => noteMatchesTags(n, filterTags))
+  }, [allNotes, filterTags])
+
+  const matchedNoteIds = useMemo(() => new Set(notes?.map(n => n.id) ?? []), [notes])
+
+  const handleTagClick = (tag: string) => {
+    setSearch(prev => {
+      const current = parseSearch(prev)
+      if (current?.type === 'tag') {
+        const lowerTag = tag.toLowerCase()
+        if (current.tags.includes(lowerTag)) {
+          const remaining = current.tags.filter(t => t !== lowerTag)
+          return remaining.length ? `tag:${remaining.join(',')}` : ''
+        }
+        return `tag:${[...current.tags, tag].join(',')}`
+      }
+      return `tag:${tag}`
+    })
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <CaptureForm />
+      <style>{`
+        @keyframes noteIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .note-item {
+          transition: opacity 0.25s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+          overflow: hidden;
+        }
+        .note-item.visible {
+          opacity: 1;
+          max-height: 200px;
+          animation: noteIn 0.25s ease;
+        }
+        .note-item.hidden {
+          opacity: 0;
+          max-height: 0;
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+      `}</style>
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}
-        placeholder="Search notes..."
+        placeholder="Search notes... (tag:name to filter by tag)"
         style={{ width: '100%', padding: '8px 12px', border: '1px solid #d4d0de', borderRadius: 10, fontSize: 14, marginBottom: '1rem', boxSizing: 'border-box', background: '#fff', color: '#3a3650', flexShrink: 0 }}
       />
       <div style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {isLoading && <p style={{ color: '#8b85a0' }}>Loading...</p>}
-        {notes?.map(n => <NoteCard key={n.id} note={n} onPinToggle={() => pinMutation.mutate(n.id)} />)}
-        {notes && notes.length === 0 && <p style={{ color: '#8b85a0' }}>No notes found.</p>}
+        {allNotes?.map(n => (
+          <div key={n.id} className={`note-item ${!filterTags || matchedNoteIds.has(n.id) ? 'visible' : 'hidden'}`}>
+            <NoteCard note={n} onPinToggle={() => pinMutation.mutate(n.id)} onTagClick={handleTagClick} filterTags={filterTags} />
+          </div>
+        ))}
+        {notes && notes.length === 0 && !isLoading && <p style={{ color: '#8b85a0' }}>No notes found.</p>}
       </div>
     </div>
   )

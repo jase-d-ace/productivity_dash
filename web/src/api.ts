@@ -11,8 +11,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
-export const fetchNotes = (cursor?: string) =>
-  request<NotesResponse>(`/notes${cursor ? `?start_cursor=${cursor}` : ''}`)
+export const fetchNotes = (cursor?: string, tag?: string) => {
+  const params = new URLSearchParams()
+  if (cursor) params.set('start_cursor', cursor)
+  if (tag) params.set('tag', tag)
+  const qs = params.toString()
+  return request<NotesResponse>(`/notes${qs ? `?${qs}` : ''}`)
+}
 
 export const searchNotes = (q: string) =>
   request<{ results: Note[] }>(`/notes/search?q=${encodeURIComponent(q)}`)

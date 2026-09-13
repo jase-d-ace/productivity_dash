@@ -53,13 +53,16 @@ def query_db(**kwargs) -> dict:
     return resp.json()
 
 
-def list_notes(start_cursor: str | None = None, page_size: int = 20) -> dict:
+def list_notes(start_cursor: str | None = None, page_size: int = 20, tag: str | None = None) -> dict:
     """List notes with pagination, excluding pinned and archived. Returns {results, has_more, next_cursor}."""
+    filters = [
+        {"property": "Pinned", "checkbox": {"equals": False}},
+        {"property": "Archived", "checkbox": {"equals": False}},
+    ]
+    if tag:
+        filters.append({"property": "Tags", "multi_select": {"contains": tag}})
     params: dict = {
-        "filter": {"and": [
-            {"property": "Pinned", "checkbox": {"equals": False}},
-            {"property": "Archived", "checkbox": {"equals": False}},
-        ]},
+        "filter": {"and": filters},
         "sorts": [{"timestamp": "created_time", "direction": "descending"}],
         "page_size": page_size,
     }

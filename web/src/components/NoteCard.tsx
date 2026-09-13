@@ -16,7 +16,7 @@ function relativeDate(iso: string) {
 
 const TODO_TAGS = ['todo', 'to-do', 'to do']
 
-export default function NoteCard({ note, onPinToggle }: { note: Note; onPinToggle?: () => void }) {
+export default function NoteCard({ note, onPinToggle, onTagClick, filterTags }: { note: Note; onPinToggle?: () => void; onTagClick?: (tag: string) => void; filterTags?: string[] }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const isTodo = note.tags.some(t => TODO_TAGS.includes(t.toLowerCase()))
@@ -128,7 +128,7 @@ export default function NoteCard({ note, onPinToggle }: { note: Note; onPinToggl
       </div>
       {note.tags.length > 0 && (
         <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
-          {note.tags.map(t => <TagBadge key={t} tag={t} />)}
+          {note.tags.map(t => <TagBadge key={t} tag={t} onClick={onTagClick} active={!!filterTags && filterTags.some(ft => t.toLowerCase().includes(ft))} />)}
         </div>
       )}
       {note.notes && <p style={{ margin: '4px 0 0', color: '#8b85a0', fontSize: 14 }}>{note.notes}</p>}

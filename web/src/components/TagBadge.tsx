@@ -8,11 +8,26 @@ function hashTag(tag: string) {
   return Math.abs(h)
 }
 
-export default function TagBadge({ tag, size }: { tag: string; size?: 'small' }) {
+export default function TagBadge({ tag, size, onClick, active }: { tag: string; size?: 'small'; onClick?: (tag: string) => void; active?: boolean }) {
   const bg = PASTEL_COLORS[hashTag(tag.toLowerCase()) % PASTEL_COLORS.length]
   const isSmall = size === 'small'
   return (
-    <span style={{ display: 'inline-block', padding: isSmall ? '1px 6px' : '2px 8px', borderRadius: 12, fontSize: isSmall ? 10 : 12, fontWeight: 600, background: bg, color: '#4a4462', marginRight: 4 }}>
+    <span
+      onClick={onClick ? (e) => { e.stopPropagation(); onClick(tag) } : undefined}
+      style={{
+        display: 'inline-block',
+        padding: isSmall ? '1px 6px' : '2px 8px',
+        borderRadius: 12,
+        fontSize: isSmall ? 10 : 12,
+        fontWeight: 600,
+        background: bg,
+        color: '#4a4462',
+        marginRight: 4,
+        cursor: onClick ? 'pointer' : 'default',
+        outline: active ? '2px solid #9b8ec4' : 'none',
+        outlineOffset: 1,
+      }}
+    >
       #{tag}
     </span>
   )
